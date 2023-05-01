@@ -112,7 +112,8 @@ PE32 = 0x10b
 PE64 = 0x20b
 
 OffsetToBaseOfCode = 0xac - 0x80
-OffsetToImageBase = 0xb4 - 0x80
+OffsetToImageBaseForPE32 = 0xb4 - 0x80
+OffsetToImageBaseForPE64 = 0xb0 - 0x80
 OffsetToSectionTableForPE32 = 0x178 - 0x80
 OffsetToSectionTableForPE64 = 0x178 - 0x80 + 16
 OffsetToMagicNumber = 0x98 - 0x80
@@ -199,8 +200,13 @@ start:
         invoke  ReadFile, dword [_handle], _baseofcode, 4, _len, 0
         test    eax, eax
         jz      .err2
+
+        movzx   ebx, word [_magic]
+        cmp     ebx, PE32
+        jz      .isPE32
+
         mov     ebx, dword [_pe_start]
-        add     ebx, OffsetToImageBase
+        add     ebx, OffsetToImageBaseForPE64
         mov     [_fileptr], ebx
         invoke  SetFilePointer, dword [_handle], dword [_fileptr] , 0, FILE_BEGIN
         invoke  ReadFile, dword [_handle], _runtimeaddress, 4, _len, 0
@@ -209,16 +215,22 @@ start:
         mov     ebx, [_baseofcode]
         add     [_runtimeaddress], ebx
 
-        movzx   ebx, word [_magic]
-        cmp     ebx, PE32
-        jz      .isPE32
-
         mov     ebx, dword [_pe_start]
         add     ebx, OffsetToSectionTableForPE64
         mov     [_fileptr], ebx
         invoke  SetFilePointer, dword [_handle], dword [_fileptr] , 0, FILE_BEGIN
         jmp     .continue
 .isPE32:
+        mov     ebx, dword [_pe_start]
+        add     ebx, OffsetToImageBaseForPE32
+        mov     [_fileptr], ebx
+        invoke  SetFilePointer, dword [_handle], dword [_fileptr] , 0, FILE_BEGIN
+        invoke  ReadFile, dword [_handle], _runtimeaddress, 4, _len, 0
+        test    eax, eax
+        jz      .err2
+        mov     ebx, [_baseofcode]
+        add     [_runtimeaddress], ebx
+
         mov     ebx, dword [_pe_start]
         add     ebx, OffsetToSectionTableForPE32
         mov     [_fileptr], ebx
