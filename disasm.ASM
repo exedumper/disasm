@@ -270,7 +270,7 @@ start:
         lea     edx, [_buffer]
         add     edx, [_offset]
 
-        cinvoke  ZydisDisassembleIntel, [_zydismode], 0,[_runtimeaddress], edx, [_len], _instruction
+        cinvoke  ZydisDisassembleIntel, [_zydismode], [_runtimeaddress], 0, edx, [_len], _instruction
         test    eax,eax
         js      .err8
         push    eax
